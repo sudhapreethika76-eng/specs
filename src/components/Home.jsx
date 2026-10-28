@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 import '../assets/style/Home.css';
+import { useSmoothScroll } from './SmoothScroll.jsx';
 
 // Local high-res product photography from assets
 import heroImg from '../assets/images/hero.png';
@@ -26,6 +27,8 @@ const EDITORIAL_MODEL_IMG = 'https://images.unsplash.com/photo-1511499767150-a48
 const LEATHER_CASE_IMG = 'https://images.unsplash.com/photo-1589782183750-6a75168e3f42?auto=format&fit=crop&w=1000&q=85';
 
 export default function Home() {
+  const lenis = useSmoothScroll();
+
   // Navigation & Scroll states
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -75,18 +78,29 @@ export default function Home() {
     });
   }, []);
 
-  // Listen for scroll to toggle navbar ivory background
+  // Listen for scroll to toggle navbar ivory background and sync animations
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 40) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    if (lenis) {
+      const handleLenisScroll = (e) => {
+        setIsScrolled(e.scroll > 40);
+        AOS.refresh();
+      };
+      lenis.on('scroll', handleLenisScroll);
+      return () => {
+        lenis.off('scroll', handleLenisScroll);
+      };
+    } else {
+      const handleScroll = () => {
+        if (window.scrollY > 40) {
+          setIsScrolled(true);
+        } else {
+          setIsScrolled(false);
+        }
+      };
+      window.addEventListener('scroll', handleScroll, { passive: true });
+      return () => window.removeEventListener('scroll', handleScroll);
+    }
+  }, [lenis]);
 
   // Refresh AOS when filters or toggles change
   useEffect(() => {
@@ -473,18 +487,25 @@ export default function Home() {
 
   const displayedProducts = showAllProducts ? filteredProducts : filteredProducts.slice(0, 6);
 
-  // Smooth scroll helper
+  // Smooth scroll helper using Lenis with native fallback
   const scrollToSection = (id) => {
     setMobileMenuOpen(false);
     const element = document.getElementById(id);
     if (element) {
-      const navOffset = 80;
-      const elementPosition = element.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - navOffset;
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      });
+      if (lenis) {
+        lenis.scrollTo(element, {
+          offset: -80,
+          duration: 1.2,
+        });
+      } else {
+        const navOffset = 80;
+        const elementPosition = element.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - navOffset;
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      }
     }
   };
 
@@ -1726,7 +1747,7 @@ export default function Home() {
       ========================================================================= */}
       {isCartOpen && (
         <div className="drawer-overlay" onClick={() => setIsCartOpen(false)}>
-          <div className="cart-drawer-panel" onClick={(e) => e.stopPropagation()}>
+          <div className="cart-drawer-panel" data-lenis-prevent onClick={(e) => e.stopPropagation()}>
             <div className="drawer-header">
               <div className="drawer-title-group">
                 <h3 className="drawer-title">YOUR SHOPPING BAG</h3>
@@ -1859,7 +1880,7 @@ export default function Home() {
       ========================================================================= */}
       {isWishlistOpen && (
         <div className="drawer-overlay" onClick={() => setIsWishlistOpen(false)}>
-          <div className="cart-drawer-panel" onClick={(e) => e.stopPropagation()}>
+          <div className="cart-drawer-panel" data-lenis-prevent onClick={(e) => e.stopPropagation()}>
             <div className="drawer-header">
               <div className="drawer-title-group">
                 <h3 className="drawer-title">SAVED FAVORITES</h3>
@@ -1938,7 +1959,7 @@ export default function Home() {
       ========================================================================= */}
       {selectedQuickView && (
         <div className="modal-overlay" onClick={() => setSelectedQuickView(null)}>
-          <div className="modal-content-card" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content-card" data-lenis-prevent onClick={(e) => e.stopPropagation()}>
             <button
               type="button"
               className="modal-close-btn"

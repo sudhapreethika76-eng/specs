@@ -1,9 +1,12 @@
 import React from 'react';
 import Home from './components/Home.jsx';
+import { SmoothScrollProvider } from './components/SmoothScroll.jsx';
 
 function App() {
   return (
-    <Home />
+    <SmoothScrollProvider>
+      <Home />
+    </SmoothScrollProvider>
   );
 }
 
